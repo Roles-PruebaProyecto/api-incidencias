@@ -37,6 +37,13 @@ class IncidenciaActualizar(BaseModel):
     prioridad: str
     tecnico: str
 
+class IncidenciaCrear(BaseModel):
+    titulo: str
+    descripcion: str
+    estado: str = "abierta"
+    prioridad: str
+    tecnico: str
+
 @app.get("/")
 def inicio():
     return {"mensaje": "API de incidencias operativa"}
@@ -74,3 +81,10 @@ def obtener_incidencia(id: int):
         if incidencia.id == id:
             return incidencia
     raise HTTPException(status_code=404, detail=f"No existe la incidencia con id {id}")
+
+@app.post("/incidencias", response_model=Incidencia, status_code=201)
+def crear_incidencia(datos: IncidenciaCrear):
+    nuevo_id = max((i.id for i in incidencias), default=0) + 1
+    nueva = Incidencia(id=nuevo_id, **datos.model_dump())
+    incidencias.append(nueva)
+    return nueva
