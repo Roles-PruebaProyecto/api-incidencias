@@ -33,3 +33,18 @@ def inicio():
 @app.get("/incidencias", response_model=list[Incidencia])
 def listar_incidencias():
     return incidencias
+
+class IncidenciaCrear(BaseModel):
+    titulo: str
+    descripcion: str
+    estado: str = "abierta"
+    prioridad: str
+    tecnico: str
+
+
+@app.post("/incidencias", response_model=Incidencia, status_code=201)
+def crear_incidencia(datos: IncidenciaCrear):
+    nuevo_id = max((i.id for i in incidencias), default=0) + 1
+    nueva = Incidencia(id=nuevo_id, **datos.model_dump())
+    incidencias.append(nueva)
+    return nueva
