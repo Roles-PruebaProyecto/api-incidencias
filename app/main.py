@@ -67,3 +67,10 @@ def eliminar_incidencia(id: int, x_admin_token: str | None = Header(default=None
             incidencias.pop(posicion)
             return {"mensaje": f"Incidencia {id} eliminada"}
     raise HTTPException(status_code=404, detail=f"No existe la incidencia con id {id}")
+
+@app.get("/incidencias/{id}", response_model=Incidencia)
+def obtener_incidencia(id: int):
+    for incidencia in incidencias:
+        if incidencia.id == id:
+            return incidencia
+    raise HTTPException(status_code=404, detail=f"No existe la incidencia con id {id}")
