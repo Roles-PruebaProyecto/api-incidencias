@@ -1,5 +1,11 @@
-from fastapi import FastAPI
+import os
+
+from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
+from dotenv import load_dotenv
+
+load_dotenv()
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN")
 
 app = FastAPI(title="API de incidencias")
 
@@ -24,6 +30,12 @@ incidencias: list[Incidencia] = [
     )
 ]
 
+class IncidenciaActualizar(BaseModel):
+    titulo: str
+    descripcion: str
+    estado: str
+    prioridad: str
+    tecnico: str
 
 @app.get("/")
 def inicio():
@@ -33,3 +45,25 @@ def inicio():
 @app.get("/incidencias", response_model=list[Incidencia])
 def listar_incidencias():
     return incidencias
+
+@app.put("/incidencias/{id}", response_model=Incidencia)
+def modificar_incidencia(id: int, datos: IncidenciaActualizar):
+    for posicion, incidencia in enumerate(incidencias):
+        if incidencia.id == id:
+            actualizada = Incidencia(id=id, **datos.model_dump())
+            incidencias[posicion] = actualizada
+            return actualizada
+    raise HTTPException(status_code=404, detail=f"No existe la incidencia con id {id}")
+
+
+@app.delete("/incidencias/{id}")
+def eliminar_incidencia(id: int, x_admin_token: str | None = Header(default=None)):
+    if not ADMIN_TOKEN:
+        raise HTTPException(status_code=500, detail="ADMIN_TOKEN no configurado en el entorno")
+    if x_admin_token != ADMIN_TOKEN:
+        raise HTTPException(status_code=403, detail="Token de administrador no válido")
+    for posicion, incidencia in enumerate(incidencias):
+        if incidencia.id == id:
+            incidencias.pop(posicion)
+            return {"mensaje": f"Incidencia {id} eliminada"}
+    raise HTTPException(status_code=404, detail=f"No existe la incidencia con id {id}")
